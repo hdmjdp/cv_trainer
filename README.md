@@ -9,6 +9,23 @@ pip install -r requirements.txt
 
 ### Data preparation
 
+test_list:
+```
+1 /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/baidu.enmix.2kh/voiceprint/13/12-1609129990405-16837420-218924.wav /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/baidu.enmix.2kh/voiceprint/13/12-1609129990405-18001116-180524.wav
+1 /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/voxceleb/voiceprint/6/12-1609123703120-65640484-131150.wav /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/voxceleb/voiceprint/6/12-1609123703120-61811914-370766.wav
+1 /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/cn_celeb/voiceprint/9/1-1620815095882-819144-80326.wav /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/cn_celeb/voiceprint/9/1-1620815095882-1060866-157602.wav
+1 /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/voxceleb/voiceprint/13/0-1609125123328-14064824-129102.wav /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/voxceleb/voiceprint/13/0-1609125123328-17387772-184398.wav
+1 /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/cn_celeb/voiceprint/6/9-1620814482701-23363212-320044.wav /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/cn_celeb/voiceprint/6/9-1620814493146-26852122-320044.wav
+0 /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/voxceleb/voiceprint/8/3-1609126600299-24061872-149582.wav /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/voxceleb/voiceprint/2/5-1609126177664-52896560-280654.wav
+```
+
+train_list
+```
+voxceleb-id00012 /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/voxceleb/voiceprint/13/0-1609122296893-3345476-139342.wav
+voxceleb-id00012 /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/voxceleb/voiceprint/13/0-1609122296893-3484818-133198.wav
+voxceleb-id00012 /data/juicefs_speech_tts_v3/public_data/11139034/vp_corpus/voxceleb/voiceprint/13/0-1609122296893-3618016-305230.wav
+```
+
 The following script can be used to download and prepare the VoxCeleb dataset for training.
 
 ```
