@@ -1,4 +1,4 @@
-# VoxCeleb trainer
+# CV search trainer
 
 This repository contains the framework for training speaker recognition models described in the paper '_In defence of metric learning for speaker recognition_'.
 
