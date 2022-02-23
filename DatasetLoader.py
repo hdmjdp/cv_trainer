@@ -10,11 +10,12 @@ import threading
 import time
 import math
 import glob
-import soundfile
-from scipy import signal
-from scipy.io import wavfile
 from torch.utils.data import Dataset, DataLoader
 import torch.distributed as dist
+import cv2
+import sklearn.preprocessing as preprocessing
+import torch.utils as utils
+import numpy as np
 
 def round_down(num, divisor):
     return num - (num%divisor)
@@ -23,35 +24,9 @@ def worker_init_fn(worker_id):
     numpy.random.seed(numpy.random.get_state()[1][0] + worker_id)
 
 
-def loadWAV(filename, max_frames, evalmode=True, num_eval=10):
-
-    # Maximum audio length
-    max_audio = max_frames * 160 + 240
-
-    # Read wav file and convert to torch tensor
-    audio, sample_rate = soundfile.read(filename)
-
-    audiosize = audio.shape[0]
-
-    if audiosize <= max_audio:
-        shortage    = max_audio - audiosize + 1 
-        audio       = numpy.pad(audio, (0, shortage), 'wrap')
-        audiosize   = audio.shape[0]
-
-    if evalmode:
-        startframe = numpy.linspace(0,audiosize-max_audio,num=num_eval)
-    else:
-        startframe = numpy.array([numpy.int64(random.random()*(audiosize-max_audio))])
-    
-    feats = []
-    if evalmode and max_frames == 0:
-        feats.append(audio)
-    else:
-        for asf in startframe:
-            feats.append(audio[int(asf):int(asf)+max_audio])
-
-    feat = numpy.stack(feats,axis=0).astype(numpy.float)
-
+def loadWAV(filename):
+    image = cv2.imread(filename)
+    feat = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return feat;
     
 class AugmentWAV(object):
@@ -144,7 +119,7 @@ class train_dataset_loader(Dataset):
 
         for index in indices:
             
-            audio = loadWAV(self.data_list[index], self.max_frames, evalmode=False)
+            audio = loadWAV(self.data_list[index])
             
             if self.augment:
                 augtype = random.randint(0,4)
