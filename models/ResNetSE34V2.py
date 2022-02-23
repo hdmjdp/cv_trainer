@@ -49,7 +49,7 @@ class ResNetSE(nn.Module):
         self.layer4 = self._make_layer(block, num_filters[3], layers[3], stride=(2, 2))
 
         self.instancenorm   = nn.InstanceNorm12d(n_mels)  # c = 3
-        outmap_size = int(self.n_mels/8)
+        outmap_size = int(self.n_mels/2/8)
         
         #self.avg_pool = GeM()
         
@@ -68,7 +68,7 @@ class ResNetSE(nn.Module):
         else:
             raise ValueError('Undefined encoder')
 
-        self.fc = nn.Linear(out_dim, nOut)
+        self.fc = nn.Linear(out_dim, nOut)  # 784->512
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
