@@ -9,6 +9,22 @@ from torch.nn import Parameter
 from models.ResNetBlocks import *
 from utils import PreEmphasis
 
+def gem(x, p=3, eps=1e-6):
+    return F.avg_pool2d(x.clamp(min=eps).pow(p), (x.size(-2), x.size(-1))).pow(1./p)
+    # return F.lp_pool2d(F.threshold(x, eps, eps), p, (x.size(-2), x.size(-1))) # alternative
+
+
+class GeM(nn.Module):
+
+    def __init__(self, p=3, eps=1e-6):
+        super(GeM, self).__init__()
+        self.p = nn.Parameter(torch.ones(1) * p)
+        self.eps = eps
+
+    def forward(self, x):
+        return gem(x, p=self.p, eps=self.eps)
+    
+    
 class ResNetSE(nn.Module):
     def __init__(self, block, layers, num_filters, nOut, encoder_type='SAP', n_mels=448, log_input=True, **kwargs):
         super(ResNetSE, self).__init__()
@@ -20,10 +36,12 @@ class ResNetSE(nn.Module):
         self.n_mels     = n_mels
         self.log_input  = log_input
 
-        self.conv1 = nn.Conv2d(3, num_filters[0] , kernel_size=3, stride=1, padding=1)
+        # self.conv1 = nn.Conv2d(3, num_filters[0] , kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(3, inplanes, kernel_size=7, stride=2,
+                                    padding=3, bias=False)
         self.relu = nn.ReLU(inplace=True)
         self.bn1 = nn.BatchNorm2d(num_filters[0])
-        
+        # self.pooling = nn.MaxPool2d(3, stride=2, ceil_mode=True)
 
         self.layer1 = self._make_layer(block, num_filters[0], layers[0])
         self.layer2 = self._make_layer(block, num_filters[1], layers[1], stride=(2, 2))
@@ -32,13 +50,15 @@ class ResNetSE(nn.Module):
 
         self.instancenorm   = nn.InstanceNorm12d(n_mels)  # c = 3
         outmap_size = int(self.n_mels/8)
-
+        
+        #self.avg_pool = GeM()
+        
         self.attention = nn.Sequential(
             nn.Conv2d(num_filters[3] * outmap_size, 128, kernel_size=1),
             nn.ReLU(),
             nn.BatchNorm2d(128),
             nn.Conv2d(128, num_filters[3] * outmap_size, kernel_size=1),
-            nn.Softmax(dim=2),
+            nn.Softmax(dim=-1),
             )
 
         if self.encoder_type == "SAP":
@@ -97,11 +117,11 @@ class ResNetSE(nn.Module):
         w = self.attention(x)
 
         if self.encoder_type == "SAP":
-            x = torch.sum(x * w, dim=2)
+            x = torch.sum(x * w, dim=(2, 3))
         elif self.encoder_type == "ASP":
-            mu = torch.sum(x * w, dim=2)
-            sg = torch.sqrt( ( torch.sum((x**2) * w, dim=2) - mu**2 ).clamp(min=1e-5) )
-            x = torch.cat((mu,sg),1)
+            mu = torch.sum(x * w, dim=(2, 3))
+            sg = torch.sqrt( ( torch.sum((x**2) * w, dim=(2, 3)) - mu**2 ).clamp(min=1e-5) )
+            x = torch.cat((mu,sg),1)  # 28 * 28 = 784
 
         x = x.view(x.size()[0], -1)
         x = self.fc(x)
