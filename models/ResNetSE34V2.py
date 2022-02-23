@@ -10,7 +10,7 @@ from models.ResNetBlocks import *
 from utils import PreEmphasis
 
 class ResNetSE(nn.Module):
-    def __init__(self, block, layers, num_filters, nOut, encoder_type='SAP', n_mels=40, log_input=True, **kwargs):
+    def __init__(self, block, layers, num_filters, nOut, encoder_type='SAP', n_mels=2, log_input=True, **kwargs):
         super(ResNetSE, self).__init__()
 
         print('Embedding size is %d, encoder %s.'%(nOut, encoder_type))
@@ -30,12 +30,7 @@ class ResNetSE(nn.Module):
         self.layer3 = self._make_layer(block, num_filters[2], layers[2], stride=(2, 2))
         self.layer4 = self._make_layer(block, num_filters[3], layers[3], stride=(2, 2))
 
-        self.instancenorm   = nn.InstanceNorm1d(n_mels)
-        self.torchfb        = torch.nn.Sequential(
-                PreEmphasis(),
-                torchaudio.transforms.MelSpectrogram(sample_rate=16000, n_fft=512, win_length=400, hop_length=160, window_fn=torch.hamming_window, n_mels=n_mels)
-                )
-
+        self.instancenorm   = nn.InstanceNorm12d(n_mels)  # c = 3
         outmap_size = int(self.n_mels/8)
 
         self.attention = nn.Sequential(
@@ -86,11 +81,7 @@ class ResNetSE(nn.Module):
 
     def forward(self, x):
 
-        with torch.no_grad():
-            with torch.cuda.amp.autocast(enabled=False):
-                x = self.torchfb(x)+1e-6
-                if self.log_input: x = x.log()
-                x = self.instancenorm(x).unsqueeze(1)
+        x = self.instancenorm(x) # B 3 448 448
 
         x = self.conv1(x)
         x = self.relu(x)
