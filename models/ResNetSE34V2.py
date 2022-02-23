@@ -2,7 +2,6 @@
 # -*- encoding: utf-8 -*-
 
 import torch
-import torchaudio
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Parameter
