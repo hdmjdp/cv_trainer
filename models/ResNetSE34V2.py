@@ -52,10 +52,10 @@ class ResNetSE(nn.Module):
         #self.avg_pool = GeM()
 
         self.attention = nn.Sequential(
-            nn.Conv2d(num_filters[3], 128, kernel_size=1),
+            nn.Conv2d(num_filters[3], 256, kernel_size=1),
             nn.ReLU(),
-            nn.BatchNorm2d(128),
-            nn.Conv2d(128, num_filters[3], kernel_size=1),
+            nn.BatchNorm2d(256),
+            nn.Conv2d(256, num_filters[3], kernel_size=1),
             nn.Softmax(dim=-1),
             )
 
@@ -129,7 +129,7 @@ class ResNetSE(nn.Module):
 
 def MainModel(nOut=256, **kwargs):
     # Number of filters
-    num_filters = [32, 64, 128, 256]
+    num_filters = [64, 128, 256, 512]
     model = ResNetSE(SEBasicBlock, [3, 4, 6, 3], num_filters, nOut, **kwargs)
     return model
 
