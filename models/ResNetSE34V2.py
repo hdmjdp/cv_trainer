@@ -10,7 +10,7 @@ from models.ResNetBlocks import *
 from utils import PreEmphasis
 
 class ResNetSE(nn.Module):
-    def __init__(self, block, layers, num_filters, nOut, encoder_type='SAP', n_mels=2, log_input=True, **kwargs):
+    def __init__(self, block, layers, num_filters, nOut, encoder_type='SAP', n_mels=448, log_input=True, **kwargs):
         super(ResNetSE, self).__init__()
 
         print('Embedding size is %d, encoder %s.'%(nOut, encoder_type))
@@ -20,7 +20,7 @@ class ResNetSE(nn.Module):
         self.n_mels     = n_mels
         self.log_input  = log_input
 
-        self.conv1 = nn.Conv2d(1, num_filters[0] , kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(3, num_filters[0] , kernel_size=3, stride=1, padding=1)
         self.relu = nn.ReLU(inplace=True)
         self.bn1 = nn.BatchNorm2d(num_filters[0])
         
@@ -34,10 +34,10 @@ class ResNetSE(nn.Module):
         outmap_size = int(self.n_mels/8)
 
         self.attention = nn.Sequential(
-            nn.Conv1d(num_filters[3] * outmap_size, 128, kernel_size=1),
+            nn.Conv2d(num_filters[3] * outmap_size, 128, kernel_size=1),
             nn.ReLU(),
-            nn.BatchNorm1d(128),
-            nn.Conv1d(128, num_filters[3] * outmap_size, kernel_size=1),
+            nn.BatchNorm2d(128),
+            nn.Conv2d(128, num_filters[3] * outmap_size, kernel_size=1),
             nn.Softmax(dim=2),
             )
 
@@ -92,7 +92,7 @@ class ResNetSE(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
 
-        x = x.reshape(x.size()[0],-1,x.size()[-1])
+        # x = x.reshape(x.size()[0],-1,x.size()[-1])
 
         w = self.attention(x)
 
