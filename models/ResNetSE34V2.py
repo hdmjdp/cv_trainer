@@ -1,3 +1,4 @@
+
 #! /usr/bin/python
 # -*- encoding: utf-8 -*-
 
@@ -5,8 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Parameter
-from models.ResNetBlocks import *
-from utils import PreEmphasis
+from ResNetBlocks import *
 
 def gem(x, p=3, eps=1e-6):
     return F.avg_pool2d(x.clamp(min=eps).pow(p), (x.size(-2), x.size(-1))).pow(1./p)
@@ -22,22 +22,21 @@ class GeM(nn.Module):
 
     def forward(self, x):
         return gem(x, p=self.p, eps=self.eps)
-    
-    
+
+
 class ResNetSE(nn.Module):
     def __init__(self, block, layers, num_filters, nOut, encoder_type='SAP', n_mels=448, log_input=True, **kwargs):
         super(ResNetSE, self).__init__()
 
         print('Embedding size is %d, encoder %s.'%(nOut, encoder_type))
-        
+
         self.inplanes   = num_filters[0]
         self.encoder_type = encoder_type
         self.n_mels     = n_mels
         self.log_input  = log_input
 
-        # self.conv1 = nn.Conv2d(3, num_filters[0] , kernel_size=3, stride=1, padding=1)
-        self.conv1 = nn.Conv2d(3, inplanes, kernel_size=7, stride=2,
-                                    padding=3, bias=False)
+        self.conv1 = nn.Conv2d(3, num_filters[0] , kernel_size=3, stride=1, padding=1)
+        # self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
         self.relu = nn.ReLU(inplace=True)
         self.bn1 = nn.BatchNorm2d(num_filters[0])
         # self.pooling = nn.MaxPool2d(3, stride=2, ceil_mode=True)
@@ -47,16 +46,16 @@ class ResNetSE(nn.Module):
         self.layer3 = self._make_layer(block, num_filters[2], layers[2], stride=(2, 2))
         self.layer4 = self._make_layer(block, num_filters[3], layers[3], stride=(2, 2))
 
-        self.instancenorm   = nn.InstanceNorm12d(n_mels)  # c = 3
-        outmap_size = int(self.n_mels/2/8)
-        
+        self.instancenorm   = nn.InstanceNorm2d(n_mels)  # c = 3
+        outmap_size = 1 #int(self.n_mels/8)
+
         #self.avg_pool = GeM()
-        
+
         self.attention = nn.Sequential(
-            nn.Conv2d(num_filters[3] * outmap_size, 128, kernel_size=1),
+            nn.Conv2d(num_filters[3], 128, kernel_size=1),
             nn.ReLU(),
             nn.BatchNorm2d(128),
-            nn.Conv2d(128, num_filters[3] * outmap_size, kernel_size=1),
+            nn.Conv2d(128, num_filters[3], kernel_size=1),
             nn.Softmax(dim=-1),
             )
 
@@ -67,7 +66,7 @@ class ResNetSE(nn.Module):
         else:
             raise ValueError('Undefined encoder')
 
-        self.fc = nn.Linear(out_dim, nOut)  # 784->512
+        self.fc = nn.Linear(out_dim, nOut)  # 256->512
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -134,3 +133,10 @@ def MainModel(nOut=256, **kwargs):
     model = ResNetSE(SEBasicBlock, [3, 4, 6, 3], num_filters, nOut, **kwargs)
     return model
 
+if __name__ == "__main__":
+    model = MainModel(nOut=512)
+    x = torch.randn(2, 3, 448, 448)
+
+    y = model(x)
+
+    print(y.shape)
